@@ -1,0 +1,73 @@
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <windows.h>
+
+#define TAILLE_GRILLE 9
+char grille[TAILLE_GRILLE][TAILLE_GRILLE];
+
+// Déplace le curseur à une position donnée (ligne, colonne)
+void gotoligcol(int lig, int col) {
+    COORD mycoord;
+    mycoord.X = col;
+    mycoord.Y = lig;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), mycoord);
+}
+
+// Remplit la grille de points pour indiquer des cases vides
+void initGrille() {
+    for (int i = 0; i < TAILLE_GRILLE; i++) {
+        for (int j = 0; j < TAILLE_GRILLE; j++) {
+            grille[i][j] = '.';
+        }
+    }
+}
+
+// Affiche la grille sans espaces supplémentaires
+void afficherGrille() {
+    for (int i = 0; i < TAILLE_GRILLE; i++) {
+        for (int j = 0; j < TAILLE_GRILLE; j++) {
+            printf("%c", grille[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// Vérifie si les coordonnées sont valides pour placer une barrière
+bool estPlacementValide(int x1, int y1, int x2, int y2) {
+    return x1 >= 0 && x1 < TAILLE_GRILLE && y1 >= 0 && y1 < TAILLE_GRILLE &&
+           x2 >= 0 && x2 < TAILLE_GRILLE && y2 >= 0 && y2 < TAILLE_GRILLE &&
+           grille[x1][y1] == '.' && grille[x2][y2] == '.';
+}
+
+// Place une barrière entre deux cases
+bool placerBarriere(int x1, int y1, int x2, int y2) {
+    if (!estPlacementValide(x1, y1, x2, y2)) {
+        printf("Placement invalide!\n");
+        return false;
+    }
+    grille[x1][y1] = '#';
+    grille[x2][y2] = '#';
+    return true;
+}
+
+int main() {
+    initGrille();
+    afficherGrille();
+
+    int x1, y1, x2, y2;
+
+    while (true) {
+        printf("Entrez les coordonnées de deux cases adjacentes : ");
+        scanf("%d %d %d %d", &x1, &y1, &x2, &y2);
+
+        if (placerBarriere(x1, y1, x2, y2)) {
+            gotoligcol(0, 0); // Réinitialise le curseur pour réafficher
+            afficherGrille();
+        } else {
+            printf("Coup invalide, réessayez.\n");
+        }
+    }
+
+    return 0;
+}
