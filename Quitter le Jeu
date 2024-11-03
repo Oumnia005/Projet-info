@@ -1,0 +1,21 @@
+#include <stdio.h>
+
+int main() {
+    char quitte;
+    printf("Entrez 'q' pour quitter le jeu.\n");
+
+    // Boucle infinie jusqu'a ce que l'utilisateur entre le caractere q
+    while (1) {
+        quitte = getchar();  // Lit le caractere saisi par l'utilisateur
+        getchar();  // Consomme le caractère de nouvelle ligne
+
+        if (quitte == 'q' || quitte == 'Q') {  // Verifie si l'utilisateur a entre 'q' ou 'Q'
+            break;  // Quitte la boucle et le jeu
+        }
+
+        //PROGRAMME DU JEU//
+
+    }
+
+    return 0;
+}
