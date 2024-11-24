@@ -1,0 +1,468 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+
+// Dimensions du plateau
+#define TAILLE 9
+
+// Barrieres
+#define MAX_BARRIERES 20
+
+// Prototypes des fonctions
+void menu();
+void lancerpartie(int nj);
+void afficher_regles();
+void initialiserplateau(int nj);
+void enregistrement(int nj);
+bool case_valide(int x, int y);
+
+// Plateau de jeu (barrières)
+char plateau[TAILLE][TAILLE];
+char barriers_h[TAILLE - 1][TAILLE]; // Barrières horizontales
+char barriers_v[TAILLE][TAILLE - 1]; // Barrières verticales
+
+// Positions des joueurs
+typedef struct {
+    int x, y;
+    char pion;
+    char nom[20];
+    int nb_barrieres_restantes;
+} Joueur;
+
+typedef struct {
+    int x1, y1;  // Coordonnées du début de la barrière
+    int x2, y2;  // Coordonnées de la fin de la barrière
+    char type;   // 'h' pour horizontal, 'v' pour vertical
+} Barriere;
+
+Joueur joueurs[4]; // Jusqu'à 4 joueurs
+int nj = 2; // Par défaut : 2 joueurs
+int nb_barrieres = 0;
+Barriere barrières[MAX_BARRIERES];
+
+// Fonction pour vérifier si un symbole est unique
+bool symbole_unique(char pion, int index) {
+    for (int i = 0; i < index; i++) {
+        if (joueurs[i].pion == pion) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// Initialisation des joueurs
+void initialiserjoueurs(int nj) {
+    for (int i = 0; i < nj; i++) {
+        printf("Joueur %d, entrez votre nom : ", i + 1);
+        scanf("%s", joueurs[i].nom);
+
+        char pion;
+        do {
+            printf("Joueur %s, choisissez un symbole unique pour votre pion : ", joueurs[i].nom);
+            scanf(" %c", &pion);
+
+            if (!symbole_unique(pion, i)) {
+                printf("Ce symbole est déjà utilisé. Choisissez-en un autre.\n");
+            } else {
+                joueurs[i].pion = pion; // Affecte le symbole au joueur
+            }
+            joueurs[i].nb_barrieres_restantes = MAX_BARRIERES / nj; // Répartition équitable
+        } while (!symbole_unique(pion, i));
+    }
+}
+
+
+// Initialise le plateau
+void initialiserplateau(int nj) {
+    // Réinitialise le plateau
+    for (int i = 0; i < TAILLE; i++) {
+        for (int j = 0; j < TAILLE; j++) {
+            plateau[i][j] = ' ';
+        }
+    }
+
+    // Initialise les positions des joueurs et place leurs symboles
+    joueurs[0].x = 0;
+    joueurs[0].y = TAILLE / 2;
+    plateau[joueurs[0].x][joueurs[0].y] = joueurs[0].pion;
+
+    joueurs[1].x = TAILLE - 1;
+    joueurs[1].y = TAILLE / 2;
+    plateau[joueurs[1].x][joueurs[1].y] = joueurs[1].pion;
+
+    if (nj == 4) {
+        joueurs[2].x = TAILLE / 2;
+        joueurs[2].y = 0;
+        plateau[joueurs[2].x][joueurs[2].y] = joueurs[2].pion;
+
+        joueurs[3].x = TAILLE / 2;
+        joueurs[3].y = TAILLE - 1;
+        plateau[joueurs[3].x][joueurs[3].y] = joueurs[3].pion;
+    }
+}
+
+
+bool poser_barriere(Joueur *joueur) {
+    if (joueur->nb_barrieres_restantes <= 0) {
+        printf("Vous n'avez plus de barrières.\n");
+        return false;
+    }
+
+    int x, y;
+    char orientation;
+    printf("Entrez les coordonnées pour poser la barrière (x y) : ");
+    scanf("%d %d", &x, &y);
+
+    if (!case_valide(x, y)) {
+        printf("Position invalide.\n");
+        return false;
+    }
+
+    printf("Orientation (h pour horizontal, v pour vertical) : ");
+    scanf(" %c", &orientation);
+
+    if (orientation == 'h' && case_valide(x, y + 1) && plateau[x][y] == ' ' && plateau[x][y + 1] == ' ') {
+        plateau[x][y] = '-';
+        plateau[x][y + 1] = '-';
+    } else if (orientation == 'v' && case_valide(x + 1, y) && plateau[x][y] == ' ' && plateau[x + 1][y] == ' ') {
+        plateau[x][y] = '|';
+        plateau[x + 1][y] = '|';
+    } else {
+        printf("Impossible de poser une barrière ici.\n");
+        return false;
+    }
+
+    joueur->nb_barrieres_restantes--;
+    return true;
+}
+
+// Affiche le plateau
+void afficherplateau() {
+    system("cls");
+    printf("\n");
+
+    // Affichage du plateau avec les barrières
+    for (int i = 0; i < TAILLE; i++) {
+        for (int j = 0; j < TAILLE; j++) {
+            printf("+---");
+        }
+        printf("+\n");
+
+        for (int j = 0; j < TAILLE; j++) {
+            printf("|");
+            if (plateau[i][j] != ' ') {
+                printf(" %c ", plateau[i][j]);
+            } else {
+                printf("   ");
+            }
+        }
+        printf("|\n");
+    }
+
+    for (int j = 0; j < TAILLE; j++) {
+        printf("+---");
+    }
+    printf("+\n");
+}
+
+// Vérifie si une case est valide (dans les limites du plateau)
+bool case_valide(int x, int y) {
+    return x >= 0 && x < TAILLE && y >= 0 && y < TAILLE;
+}
+
+// Déplace un joueur
+bool deplacer_joueur(Joueur *joueur, char direction) {
+    int nv_x = joueur->x, nv_y = joueur->y;
+
+    switch (direction) {
+        case 'h': nv_x--; break; // Haut
+        case 'b': nv_x++; break; // Bas
+        case 'g': nv_y--; break; // Gauche
+        case 'd': nv_y++; break; // Droite
+        default: return false;
+    }
+
+
+    if (!case_valide(nv_x, nv_y))
+        return false;
+
+    if (plateau[nv_x][nv_y] == ' ') {
+        plateau[joueur->x][joueur->y] = ' ';
+        joueur->x = nv_x;
+        joueur->y = nv_y;
+        plateau[joueur->x][joueur->y] = joueur->pion;
+        return true;
+    }
+
+    for (int i = 0; i < nj; i++) {
+        if (joueurs[i].x == nv_x && joueurs[i].y == nv_y) {
+            int saut_x = nv_x + (nv_x - joueur->x); // Case derrière
+            int saut_y = nv_y + (nv_y - joueur->y);
+
+            // Si la case derrière est valide et libre, effectuer le saut
+            if (case_valide(saut_x, saut_y) && plateau[saut_x][saut_y] == ' ') {
+                plateau[joueur->x][joueur->y] = ' ';
+                joueur->x = saut_x;
+                joueur->y = saut_y;
+                plateau[joueur->x][joueur->y] = joueur->pion;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// Vérifie si un joueur a gagné
+bool verifvictoire(Joueur joueur) {
+    if (nj==2){
+        if (joueurs[0].x == TAILLE - 1) {
+            return true;
+        }
+        if (joueurs[1].x == 0) {
+            return true;
+        }
+    }
+    if (nj==4){
+        if (joueurs[0].x == TAILLE - 1) {
+            return true;
+        }
+        if (joueurs[1].x == 0) {
+            return true;
+        }
+        if (joueurs[2].y == TAILLE - 1) {
+            return true;
+        }
+        if (joueurs[3].y == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Joue une partie
+void lancerpartie(int nj) {
+    initialiserjoueurs(nj);
+    initialiserplateau(nj);
+    // Initialisation du générateur aléatoire
+    srand(time(NULL));
+
+    // Sélection du joueur de départ
+    int tour = rand() % nj; // Numéro aléatoire entre 0 et nb_joueurs - 1
+
+    while (1) {
+        afficherplateau(nj);
+
+        // Vérifie la victoire
+        if (verifvictoire(joueurs[tour])) {
+            printf("\nLe joueur %s a remporte la partie !\n", joueurs[tour-1].nom);
+            getchar();
+            getchar();
+            break;
+        }
+
+        printf("\n %s, Que vous voulez faire:\n ", joueurs[tour].nom);
+        printf("1.Bouger mon pion\n");
+        printf(" 2.Poser une barriere (%d barrieres restantes)\n", joueurs[tour].nb_barrieres_restantes);
+        printf(" 3.Passer mon tour\n");
+        printf(" 4.Annuler le dernier tour\n");
+        printf(" 5.Retour au menu\n");
+        int choix;
+        char commande;
+        scanf(" %d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("Quelle direction ?(h/b/g/d)");
+                scanf(" %c", &commande);
+                if (!deplacer_joueur(&joueurs[tour], commande)) {
+                printf("Déplacement invalide !\n");
+                continue;
+                }
+                tour = (tour + 1) % nj; // Tour suivant
+                break;
+            case 2:
+                if (!poser_barriere(&joueurs[tour])) {
+                    continue;
+                }
+                tour = (tour + 1) % nj;
+                break;
+            case 3:
+                tour = (tour + 1) % nj;
+                break;
+            case 4:
+                printf("Pas encore codé");
+                break;
+            case 5:
+                enregistrement(nj);
+                system("cls");
+                menu();
+            default:
+                printf("Veuillez choisir un des numero proposes");
+                break;
+        }
+
+    }
+}
+
+void anciennepartie() {
+    FILE *f = NULL;
+    f = fopen("Game.txt", "r"); // Ouverture du fichier en mode lecture
+    if (f == NULL) {
+        printf("Erreur : Impossible de lire le fichier de sauvegarde.\n");
+        return;
+    }
+
+    // Lecture du nombre de joueurs
+    fscanf(f, "%d\n", &nj);
+
+    // Initialiser le plateau
+    initialiserplateau(nj);
+
+    // Lire les informations des joueurs
+    for (int i = 0; i < nj; i++) {
+        char nom[20];
+        char pion;
+        int x, y;
+
+        // Lecture des informations d'un joueur
+        fscanf(f, "%s,%c,%d,%d\n", nom, &pion, &x, &y);
+
+        // Mise à jour des informations du joueur
+        strcpy(joueurs[i].nom, nom);
+        joueurs[i].pion = pion;
+        joueurs[i].x = x;
+        joueurs[i].y = y;
+
+        // Réinitialise le plateau
+        for (int i = 0; i < TAILLE; i++) {
+            for (int j = 0; j < TAILLE; j++) {
+                plateau[i][j] = ' ';
+            }
+        }
+
+        // Placer le pion du joueur sur le plateau
+        plateau[x][y] = pion;
+    }
+
+    fclose(f); // Fermer le fichier
+    printf("Partie chargée avec succès !\n");
+    afficherplateau(nj);
+}
+
+
+void enregistrement(int nj)//methode pour enregister une partie
+{
+    FILE *f=NULL;
+    f=fopen("Game.txt","w");//ouverture du fichier
+    if(f==NULL)//verif de l'ouverture
+    {
+        printf("Erreur ouverture fichier");
+    }
+    else
+    {
+        fprintf(f,"%d\n",nj);//on enregistre le nb de joueur
+        for(int i=0;i<nj;i++)//on enregistre les info de chaque joueur
+        {
+            fprintf(f,"%s,%c,%d,%d\n",joueurs[i].nom,joueurs[i].pion,joueurs[i].x,joueurs[i].y);
+        }
+    }
+    fclose(f);
+}
+
+// Affiche les règles
+void afficher_regles() {
+    system("cls");
+    printf("   ______________________________________________________________________         \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                            |REGLES DU JEU|                           |        \n");
+    printf("  |______________________________________________________________________|        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                            --BUT DU JEU--                            |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |             Deux modes de jeu possibles : 2 ou 4 joueurs.            |        \n");
+    printf("  |  Etre le premier a atteindre la ligne opposee depuis sa ligne de     |        \n");
+    printf("  |  depart.                                                             |        \n");
+    printf("  |     Un tirage au sort de facon aleatoire determine qui commence.     |        \n");
+    printf("  |    Les barrieres sont reparties equitablement entre les joueurs.     |        \n");
+    printf("  |        Pour 2 joueurs : chaque joueur dispose de 10 barrieres        |        \n");
+    printf("  |        Pour 4 joueurs : chaque joueur dispose de 5 barrieres         |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                           --DEPLACEMENTS--                           |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                A tour de role chaque joueur choisi de :              |        \n");
+    printf("  |  1) Deplacer son pion d'une case (Gauche/Droite/Devant/Derriere)     |        \n");
+    printf("  |  2) Poser une de ses barrieres. Une barriere doit etre posee entre 2 |        \n");
+    printf("  |   blocs de 2 cases. Lorsqu'il n'a plus de barrieres, un joueur est   |        \n");
+    printf("  |                     oblige de deplacer son pion.                     |        \n");
+    printf("  |  => Objectif : creer son propre chemin ou ralentir son adversaire    |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |                          --SPECIFICATIONS--                          |        \n");
+    printf("  |                                                                      |        \n");
+    printf("  |         /!\\  Interdiction de fermer totalement l'acces  /!\\          |      \n");
+    printf("  |  Si 2 pions se retrouvent face a face le joueur a le droit de sauter |        \n");
+    printf("  |                      par dessus sont adversaire.                     |        \n");
+    printf("  |  Si une barriere se trouve derrière le pion saute, le joueur peut   |        \n");
+    printf("  |       se deplacer sur le cote droit ou gauche du pion saute.         |        \n");
+    printf("  |______________________________________________________________________|      \n\n");
+    printf("APPUYEZ SUR ENTREE POUR RETOURNER AU MENU");
+    getchar();
+    getchar();
+}
+
+// Menu principal
+void menu() {
+    int choix;
+
+    do {
+        system("cls");
+        printf("        _________________________________________         \n");
+        printf("       |                 -MENU-                  |       \n");
+        printf("       |_________________________________________|        \n");
+        printf("       |   1. LANCER UNE NOUVELLE PARTIE         |       \n");
+        printf("       |   2. VOIR LES REGLES                    |       \n");
+        printf("       |   3. REPRENDRE UNE PARTIE SAUVEGARDEE   |       \n");
+        printf("       |   4. SCORES                             |       \n");
+        printf("       |   5. QUITTER                            |       \n");
+        printf("       |_________________________________________|       \n");
+        printf("Votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("Nombre de joueurs (2 ou 4) : ");
+                scanf("%d", &nj);
+                if (nj != 2 && nj != 4) {
+                    printf("Nombre de joueurs invalide ! Retour au menu.\n");
+                    break;
+                }
+                lancerpartie(nj);
+                break;
+            case 2:
+                afficher_regles();
+                break;
+            case 3:
+                anciennepartie();
+                break;
+            case 4:
+                printf("Les scores seront bientôt disponibles !\n");
+                getchar();
+                break;
+            case 5:
+                printf("Merci d'avoir joué !\n");
+                exit(0);
+            default:
+                printf("Choix invalide. Réessayez.\n");
+        }
+    } while (1);
+}
+
+int main() {
+    menu();
+    return 0;
+}
