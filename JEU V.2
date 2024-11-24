@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 // Dimensions du plateau
 #define TAILLE 9
@@ -162,7 +163,11 @@ bool verifier_victoire(Joueur joueur) {
 void jouer_partie(int nb_joueurs) {
     initialiser_joueurs(nb_joueurs);
     initialiser_plateau(nb_joueurs);
-    int tour = 0;
+    // Initialisation du générateur aléatoire
+    srand(time(NULL));
+
+    // Sélection du joueur de départ
+    int tour = rand() % nb_joueurs; // Numéro aléatoire entre 0 et nb_joueurs - 1
 
     while (1) {
         afficher_plateau();
