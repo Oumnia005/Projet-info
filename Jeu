@@ -1,0 +1,207 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+// Dimensions du plateau
+#define TAILLE 9
+
+// Prototypes des fonctions
+void menu();
+void jouer_partie(int nb_joueurs);
+void afficher_regles();
+void afficher_scores();
+void sauvegarder_partie();
+void quitter_jeu();
+
+// Plateau de jeu (barrières)
+char plateau[TAILLE][TAILLE];
+char barriers_h[TAILLE - 1][TAILLE]; // Barrières horizontales
+char barriers_v[TAILLE][TAILLE - 1]; // Barrières verticales
+
+// Positions des joueurs
+typedef struct {
+    int x, y;
+    char symbole;
+} Joueur;
+
+Joueur joueurs[4]; // Jusqu'à 4 joueurs
+int nb_joueurs = 2; // Par défaut : 2 joueurs
+
+// Initialise le plateau
+void initialiser_plateau(int nb_joueurs) {
+    // Réinitialisation du plateau
+    for (int i = 0; i < TAILLE; i++) {
+        for (int j = 0; j < TAILLE; j++) {
+            plateau[i][j] = ' ';
+        }
+    }
+
+    // Positions initiales des joueurs
+    joueurs[0] = (Joueur){1, TAILLE / 2, '@'}; // Joueur 1
+    joueurs[1] = (Joueur){TAILLE - 1, TAILLE / 2, '#'}; // Joueur 2
+
+    if (nb_joueurs == 4) {
+        joueurs[2] = (Joueur){TAILLE / 2, 1, 'O'}; // Joueur 3
+        joueurs[3] = (Joueur){TAILLE / 2, TAILLE - 1, 'X'}; // Joueur 4
+    }
+
+    // Placement initial des joueurs sur le plateau
+    for (int i = 0; i < nb_joueurs; i++) {
+        plateau[joueurs[i].x][joueurs[i].y] = joueurs[i].symbole;
+    }
+}
+
+// Affiche le plateau
+void afficher_plateau() {
+    system("clear");
+    printf("\n");
+
+    // Affichage du plateau avec les barrières
+    for (int i = 0; i < TAILLE; i++) {
+        for (int j = 0; j < TAILLE; j++) {
+            printf("+---");
+        }
+        printf("+\n");
+
+        for (int j = 0; j < TAILLE; j++) {
+            printf("|");
+            if (plateau[i][j] != ' ') {
+                printf(" %c ", plateau[i][j]);
+            } else {
+                printf("   ");
+            }
+        }
+        printf("|\n");
+    }
+
+    for (int j = 0; j < TAILLE; j++) {
+        printf("+---");
+    }
+    printf("+\n");
+}
+
+// Vérifie si une case est valide (dans les limites du plateau)
+bool case_valide(int x, int y) {
+    return x >= 0 && x < TAILLE && y >= 0 && y < TAILLE;
+}
+
+// Déplace un joueur
+bool deplacer_joueur(Joueur *joueur, char direction) {
+    int new_x = joueur->x, new_y = joueur->y;
+
+    switch (direction) {
+        case 'h': new_x--; break; // Haut
+        case 'b': new_x++; break; // Bas
+        case 'g': new_y--; break; // Gauche
+        case 'd': new_y++; break; // Droite
+        default: return false;
+    }
+
+    if (case_valide(new_x, new_y) && plateau[new_x][new_y] == ' ') {
+        plateau[joueur->x][joueur->y] = ' ';
+        joueur->x = new_x;
+        joueur->y = new_y;
+        plateau[joueur->x][joueur->y] = joueur->symbole;
+        return true;
+    }
+
+    return false;
+}
+
+// Vérifie si un joueur a gagné
+bool verifier_victoire(Joueur joueur) {
+    if (joueur.symbole == '@' && joueur.x == TAILLE - 1) return true;
+    if (joueur.symbole == '#' && joueur.x == 0) return true;
+    if (joueur.symbole == 'O' && joueur.y == TAILLE - 1) return true;
+    if (joueur.symbole == 'X' && joueur.y == 0) return true;
+
+    return false;
+}
+
+// Joue une partie
+void jouer_partie(int nb_joueurs) {
+    initialiser_plateau(nb_joueurs);
+    int tour = 0;
+
+    while (1) {
+        afficher_plateau();
+
+        // Vérifie la victoire
+        if (verifier_victoire(joueurs[tour])) {
+            printf("\nLe joueur %c a gagné !\n", joueurs[tour].symbole);
+            break;
+        }
+
+        printf("\nJoueur %c, entrez une commande (h/b/g/d pour déplacer) : ", joueurs[tour].symbole);
+        char commande;
+        scanf(" %c", &commande);
+
+        if (!deplacer_joueur(&joueurs[tour], commande)) {
+            printf("Déplacement invalide !\n");
+            continue;
+        }
+
+        tour = (tour + 1) % nb_joueurs; // Tour suivant
+    }
+}
+
+// Affiche les règles
+void afficher_regles() {
+    system("clear");
+    printf("Règles du jeu :\n");
+    printf("1. Chaque joueur doit déplacer son pion jusqu'à la ligne opposée à sa position initiale.\n");
+    printf("2. Utilisez 'h' pour haut, 'b' pour bas, 'g' pour gauche, et 'd' pour droite.\n");
+    printf("3. Les joueurs jouent chacun leur tour.\n");
+    printf("\nAppuyez sur Entrée pour revenir au menu.");
+    getchar();
+    getchar();
+}
+
+// Menu principal
+void menu() {
+    int choix;
+
+    do {
+        system("clear");
+        printf("=== MENU PRINCIPAL ===\n");
+        printf("1. Commencer une partie\n");
+        printf("2. Règles\n");
+        printf("3. Scores\n");
+        printf("4. Sauvegarder la partie\n");
+        printf("5. Quitter\n");
+        printf("Votre choix : ");
+        scanf("%d", &choix);
+
+        switch (choix) {
+            case 1:
+                printf("Nombre de joueurs (2 ou 4) : ");
+                scanf("%d", &nb_joueurs);
+                if (nb_joueurs != 2 && nb_joueurs != 4) {
+                    printf("Nombre de joueurs invalide ! Retour au menu.\n");
+                    break;
+                }
+                jouer_partie(nb_joueurs);
+                break;
+            case 2:
+                afficher_regles();
+                break;
+            case 3:
+                printf("Les scores seront bientôt disponibles !\n");
+                break;
+            case 4:
+                printf("Sauvegarde indisponible pour l'instant.\n");
+                break;
+            case 5:
+                printf("Merci d'avoir joué !\n");
+                exit(0);
+            default:
+                printf("Choix invalide. Réessayez.\n");
+        }
+    } while (1);
+}
+
+int main() {
+    menu();
+    return 0;
+}
