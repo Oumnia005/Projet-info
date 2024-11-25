@@ -1,0 +1,58 @@
+Pour que les barrières déposées soient affichées en couleur tout en laissant le reste du plateau en noir et blanc, vous pouvez modifier la fonction qui affiche le plateau (afficher_plateau) pour appliquer une couleur uniquement aux caractères représentant les barrières ('-' pour horizontal et '|' pour vertical). Voici comment faire :
+
+Code modifié : Fonction afficher_plateau
+void afficher_plateau() {
+    system("cls");
+    for (int i = 0; i < TAILLE; i++) {
+        for (int j = 0; j < TAILLE; j++) {
+            printf("+---");
+        }
+        printf("+\n");
+        for (int j = 0; j < TAILLE; j++) {
+            printf("|");
+            if (plateau[i][j] == '-') { // Barrière horizontale
+                changer_couleur(14); // Jaune
+                printf(" - ");
+                changer_couleur(15); // Blanc
+            } else if (plateau[i][j] == '|') { // Barrière verticale
+                changer_couleur(12); // Rouge
+                printf(" | ");
+                changer_couleur(15); // Blanc
+            } else if (plateau[i][j] != ' ') { // Pion des joueurs
+                changer_couleur(11); // Bleu clair
+                printf(" %c ", plateau[i][j]);
+                changer_couleur(15); // Blanc
+            } else {
+                printf("   "); // Espace vide
+            }
+        }
+        printf("|\n");
+    }
+    for (int j = 0; j < TAILLE; j++) {
+        printf("+---");
+    }
+    printf("+\n");
+}
+Explications des modifications
+Barrières horizontales ('-') :
+La couleur est définie avec changer_couleur(14) (jaune, par exemple).
+Le texte est réinitialisé à sa couleur normale après avoir affiché la barrière.
+Barrières verticales ('|') :
+La couleur est définie avec changer_couleur(12) (rouge, par exemple).
+Pions des joueurs :
+Les pions sont affichés avec une autre couleur (changer_couleur(11) pour bleu clair).
+Espace vide (' ') :
+Les cases vides ne sont pas colorées.
+Réinitialisation :
+Après chaque élément coloré, le texte revient à la couleur par défaut avec changer_couleur(15).
+Fonction changer_couleur
+Assurez-vous que votre fonction changer_couleur utilise les bonnes valeurs pour les couleurs que vous voulez afficher. Par exemple :
+
+void changer_couleur(int couleur) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), couleur);
+}
+Résultat attendu
+Les barrières horizontales seront affichées en jaune.
+Les barrières verticales seront affichées en rouge.
+Les pions des joueurs seront affichés en bleu clair.
+Les autres éléments (espaces vides et lignes du plateau) resteront en blanc.
