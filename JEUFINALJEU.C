@@ -60,31 +60,31 @@ bool deplacer_joueur(Joueur *joueur,Joueur joueurs[], char direction,char platea
 
 bool poser_barriere(Joueur *joueur, char plateau[TAILLE][TAILLE]) {
     if (joueur->nb_barrieres_restantes <= 0) {//VERIFIE LE NB DE BARRIERES
-        printf("Vous n'avez plus de barrières.\n");
+        printf("Vous n'avez plus de barrières.\n");//AFFICHE AVERTISSEMENT 
         return false;
     }
 
     int x, y;
     char orientation;
-    printf("Entrez les coordonnées pour poser la barrière (x y) : ");
-    scanf("%d %d", &x, &y);
+    printf("Entrez les coordonnées pour poser la barrière (x y) : ");// DEMANDE AU JOUEUR DE RENTRER LES COORDONNEES DE LA BARRIERE QU'IL SOUHAITE POSER
+    scanf("%d %d", &x, &y);// LE JOUEUR RENTRE LES COORDONNEES 
 
     if (!case_valide(x, y)) {
         printf("Position invalide.\n");//VERIFIE SI LES COORDONNES EXISTENT
         return false;
     }
 
-    printf("Orientation (H pour horizontal, V pour vertical) : ");
-    scanf(" %c", &orientation);
+    printf("Orientation (H pour horizontal, V pour vertical) : ");// DEMANDE DE CHOISIR LE SENS DES BARRIERES
+    scanf(" %c", &orientation);// LE JOUEUR RENTRE LE SENS 
     //SI TT EST CORRECT ALORS POSE DE LA BARRIERE
-    if (orientation == 'H' && case_valide(x, y + 1) && plateau[x][y] == ' ' && plateau[x][y + 1] == ' ') {
-        plateau[x][y] = '-';
+    if (orientation == 'H' && case_valide(x, y + 1) && plateau[x][y] == ' ' && plateau[x][y + 1] == ' ') {// CONDITION DE DEPOSE DE BARRIERE
+        plateau[x][y] = '-'; 
         plateau[x][y + 1] = '-';
     } else if (orientation == 'V' && case_valide(x + 1, y) && plateau[x][y] == ' ' && plateau[x + 1][y] == ' ') {
         plateau[x][y] = '|';
         plateau[x + 1][y] = '|';
     } else {
-        printf("Impossible de poser une barrière ici.\n");
+        printf("Impossible de poser une barrière ici.\n");// AFFFICHE MESSAGE D'ERREUR 
         return false;
     }
 
@@ -196,7 +196,7 @@ void anciennepartie(int nj,char plateau[TAILLE][TAILLE], Joueur joueurs[]) {
     while (1) {
         afficherplateau(plateau);
 
-        // VERIF WIN
+        // VERIF DE LA VICTOIRE
         if (verifvictoire(joueurs, nj)) {
             printf("\nLe joueur %s a remporte la partie !\n", joueurs[tour-1].nom);
             joueurs[tour-1].score+= 5;
@@ -205,7 +205,7 @@ void anciennepartie(int nj,char plateau[TAILLE][TAILLE], Joueur joueurs[]) {
             getchar();
             break;
         }
-        //CHOIX ACTIONS
+        //CHOIX DES ACTIONS
         printf("\n %s, Que vous voulez faire:\n ", joueurs[tour].nom);
         printf("1.Bouger mon pion\n");
         printf(" 2.Poser une barriere (%d barrieres restantes)\n", joueurs[tour].nb_barrieres_restantes);
@@ -218,10 +218,10 @@ void anciennepartie(int nj,char plateau[TAILLE][TAILLE], Joueur joueurs[]) {
 
         switch (choix) {
             case 1:
-                printf("Quelle direction ?(H/B/G/D)");
-            scanf(" %c", &commande);
+                printf("Quelle direction ?(H/B/G/D)");// AFFICHAGE DE DEMANDE DE LA DIRECTION
+            scanf(" %c", &commande);// JOUEUR RENTRE LA DIRECTION QU'IL SOUHAITE
             if (!deplacer_joueur(&joueurs[tour],joueurs, commande, plateau, nj)) {
-                printf("Déplacement invalide !\n");
+                printf("Déplacement invalide !\n");//MESSAGE D'ERREUR DE LA DIRECTION
                 continue;
             }
 
@@ -241,10 +241,10 @@ void anciennepartie(int nj,char plateau[TAILLE][TAILLE], Joueur joueurs[]) {
             break;
             case 5:
                 enregistrement(nj, joueurs);
-            system("cls");
+            system("cls");//EFFACE LA PAGE AFFICHE ET REVIENS AU MENU
             menu(nj, plateau, joueurs);
             default:
-                printf("Veuillez choisir un des numero proposes");
+                printf("Veuillez choisir un des numero proposes");// DEMANDE DE CHOISIR PARMI LES OPTIONS DU MENU
             break;
         }
 
