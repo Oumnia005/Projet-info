@@ -1,0 +1,39 @@
+//
+// Created by samdj on 24/11/2024.
+//
+
+#include "stdbool.h"
+
+#ifndef JEU_H
+#define JEU_H
+
+
+// Dimensions du plateau
+#define TAILLE 9
+
+// Barrieres
+#define MAX_BARRIERES 20
+
+// Positions des joueurs
+typedef struct {
+    int x, y;
+    char pion;
+    char nom[20];
+    int nb_barrieres_restantes;
+    int score;
+} Joueur;
+
+typedef struct {
+    int x1, y1;  // Coordonnées du début de la barrière
+    int x2, y2;  // Coordonnées de la fin de la barrière
+    char type;   // 'h' pour horizontal, 'v' pour vertical
+} Barriere;
+
+bool poser_barriere(Joueur *joueur, char plateau[TAILLE][TAILLE]);
+bool case_valide(int x, int y);
+bool deplacer_joueur(Joueur *joueur,Joueur joueurs[], char direction,char plateau[TAILLE][TAILLE],int nj);
+bool verifvictoire(Joueur joueurs[], int nj);
+void enregistrement(int nj, Joueur joueurs[],int tour);
+void anciennepartie(int nj,char plateau[TAILLE][TAILLE], Joueur joueurs[]);
+
+#endif //JEU_H
