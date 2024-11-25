@@ -20,10 +20,10 @@ bool deplacer_joueur(Joueur *joueur,Joueur joueurs[], char direction,char platea
     int nv_x = joueur->x, nv_y = joueur->y;//NOUVELLES COORDONNES
 
     switch (direction) { //DIFFERENTES DIRECTION DE DEPLACEMENT PR LE PION
-        case 'H': nv_x=nv_x-2; break; // Haut
-        case 'B': nv_x=nv_x+2; break; // Bas
-        case 'G': nv_y=nv_y-2; break; // Gauche
-        case 'D': nv_y=nv_y+2; break; // Droite
+        case 'H': nv_x=nv_x-1; break; // H
+        case 'B': nv_x=nv_x+1; break; // B
+        case 'G': nv_y=nv_y-1; break; // G
+        case 'D': nv_y=nv_y+1; break; // D
         default: return false;
     }
 
